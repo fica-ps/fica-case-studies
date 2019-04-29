@@ -44,7 +44,6 @@ module fastICA
                 end
                 wp = wp - t
             end
-            wp = wp / sqrt(sum(wp.^2))       
             iter = 0
             chg = 0
             converge = false
@@ -68,12 +67,15 @@ module fastICA
                     end
                     w1 = w1 - t
                 end
-                w1 = w1 / sqrt(sum(w1.^2))             
+                w1 = w1 / sqrt(sum(w1.^2))   
+                println("wp = $wp")
+                println("w1 = $w1")
                 println("W for iter $iter = $W")
                 #check for convergence
                 #eg: https://github.com/JuliaStats/MultivariateStats.jl/blob/master/src/ica.jl#L97 ln 124 and 125
                 chg =  maximum(abs.(abs.(sum(w1 .* wp)) .- 1.0))
-                println("Change for iter $iter = $chg")
+                println("Change for iter $iter = $chg")              
+                wp = w1
                 converge = ( chg < tol )
             end
             retW[i,:,] = wp
@@ -98,8 +100,10 @@ module fastICA
         maxiter > 1 || error("maxiter must be greater than 1.")
         tol > 0 || error("tol must be positive.")
         alpha >= 1 && alpha <= 2|| error("alpha must be in between 1 and 2")
-        if(nic > min(n,m))
-          nic = min(n,m)
+        K = 0
+        comp = min(n,m)
+        if(nic > comp)
+          nic = comp
         end
         X1 = X
         if(whiten)
@@ -112,10 +116,11 @@ module fastICA
         end
         # initialize weights of size n with random values
         #src : https://en.wikipedia.org/wiki/FastICA 
-        W = rand(m,m)
-        return fast_ica_def(maxiter,nic,X1,tol,W,alpha)
-        #w = a * K
-        #return w * X
+        W = rand(comp,comp)
+        a = fast_ica_def(maxiter,nic,X1,tol,W,alpha)
+        println("K=$K")
+        w = a * K
+        return w * X
     end
     
 
