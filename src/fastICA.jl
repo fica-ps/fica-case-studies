@@ -100,13 +100,13 @@ module fastICA
         maxiter > 1 || error("maxiter must be greater than 1.")
         tol > 0 || error("tol must be positive.")
         alpha >= 1 && alpha <= 2|| error("alpha must be in between 1 and 2")
-        K = 0
         comp = min(n,m)
         if(nic > comp)
           nic = comp
         end
         X1 = X
         if(whiten)
+            K = 0
             X = (X .- mean(X,dims=1))'
             V = X * X'/n
             s = svd(V)
@@ -118,9 +118,7 @@ module fastICA
         #src : https://en.wikipedia.org/wiki/FastICA 
         W = rand(comp,comp)
         a = fast_ica_def(maxiter,nic,X1,tol,W,alpha)
-        println("K=$K")
-        w = a * K
-        return w * X
+        return a
     end
     
 
