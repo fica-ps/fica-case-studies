@@ -6,14 +6,14 @@ library(imager)
 #cat_one
 setwd(dirname(sys.frame(1)$ofile))
 
-c_one <- load.image('C:/Users/leonw/Desktop/ISEL/project/cran/fastICA/R/cat_one_resize.jpg')
+c_one <- load.image('C:/Users/David/Desktop/ISEL/Projecto/fica-case-studies/R/cat_one_resize.jpg')
 
 c_one.g <- grayscale(c_one)
 plot(c_one.g) #Cat one
 
 #cat_two
 
-c_two <- load.image('C:/Users/leonw/Desktop/ISEL/project/cran/fastICA/R/cat_two_resize.jpg')
+c_two <- load.image('C:/Users/David/Desktop/ISEL/Projecto/fica-case-studies/R/cat_two_resize.jpg')
 
 c_two.g <- grayscale(c_two) 
 plot(c_two.g) #Cat two
@@ -34,7 +34,7 @@ Z = vec_one * 0.8 + vec_two * 0.2
 
 plot(as.cimg(matrix(Z,rows,cols)))
 
-K <- rbind(X,Z)
+K <- cbind(X,Z)
 
 a <- fastICA(K, 2, alg.typ = "deflation", fun = "logcosh", alpha = 1,
              method = "R", row.norm = FALSE, maxit = 100,
