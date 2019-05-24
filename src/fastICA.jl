@@ -45,45 +45,32 @@ module fastICA
                 wp = wp - t
             end
             normalize!(wp)
-            println("wp after normalize = $wp")
-            println("/////")
-            println("/////")
             iter = 0
             chg = 0
             converge = false
+            println("Component n $nic")
             while !converge && iter < maxiter
                 iter+=1
+                println("wp = $wp")
                 wx = wp' * X
-                println("wx = $wx")
                 gwx = tanh.(alpha * wx)
                 gwx = vcat(gwx,gwx)
                 xgwx = X .* gwx
                 v1 = vec(mapslices(mean, xgwx, dims = 2))
-                println("v1 = $v1")
                 gdwx = alpha * (1 .- tanh.(alpha * wx).^2)
                 v2 = mean(gdwx) * wp
-                println("v2 = $v2")
                 w1 = v1 - v2
-                println("w1 BEFORE NORMALIZE = $w1")
                 #to-do create aux func
                 if (i > 1) 
-                println("/////")
-
                     t = w1
                     t = zeros(size(w1))
                     for u = 1:(i-1)
                         k = sum(w1 .* retW[u,:,])
                         t = t + k * retW[u,:,]
                     end
-                println("/////")
-                println("W1 when i > 1")
                     w1 = w1 - t
                 end
-                println("/////")
-                println("/////")
                 normalize!(w1)
-                println("W1 AFTER NORMALIZE = $w1")
-                println("wp for iter $iter nic $i = $wp")
                 #check for convergence
                 #eg: https://github.com/JuliaStats/MultivariateStats.jl/blob/master/src/ica.jl#L97 ln 124 and 125
                 chg =  maximum(abs.(abs.(sum(w1 .* wp)) .- 1.0))
