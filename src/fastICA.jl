@@ -15,70 +15,84 @@ module fastICA
     #mat -> the matrix to whiten 
     #pca -> optional boolean which is used to determine the whitening technique
     function whiten(mat::Array{Float64 ,2},pca::Bool = true)::Array{Float64 ,2}
-        U,S,_ = sing_val_decomp(mat)
-        values = broadcast(+,  eps(0.3), S)
-        pca_w = (Diagonal(values .^ (-1/2)) * U') * mat
+        sigma = cov(mat)
+        vals,vecs = eigen(sigma)
+        #Sort eigvals and eigvecs by DESCENDING order
+        vecs = reverse(vecs, dims=2)
+        vals = reverse(vals, dims=1)
+        pca_w =  Diagonal(1 ./ sqrt.(vals)) * vecs'
         if(pca)
             return pca_w
         end
         #zca whitening
-        return U * pca_w
+        return vecs * pca_w
     end 
 
     #Fast Ica deflation algorithm
     function fast_ica_def(maxiter::Int64, nic::Int64,X::Array{Float64,2},tol::Float64,W::Array{Float64,2},alpha::Float64)::Array{Float64 , 2}     
         #return W
         retW = zeros(size(W))        
-        #normalize weight vector to unity i.e. vector sum = 1
         #src : http://www.measurement.sk/2011/Patil.pdf pg 119 
         for i = 1:nic
-            wp = W[i,:,]
-            wp = normalize!(wp,1)
-            W[i,:,] = wp
+            wp = W[i,:,]            
             #to-do create aux func
             if (i > 1)
                 t = zeros(size(wp))
                 for u = 1:(i-1)
-                   k = sum(wp * retW[u,:,]')
+                   k = sum(wp .* retW[u,:,])
                    t = t + k * retW[u,:,]
                 end
                 wp = wp - t
             end
+            normalize!(wp)
+            println("wp after normalize = $wp")
+            println("/////")
+            println("/////")
             iter = 0
             chg = 0
             converge = false
             while !converge && iter < maxiter
                 iter+=1
                 wx = wp' * X
+                println("wx = $wx")
                 gwx = tanh.(alpha * wx)
                 gwx = vcat(gwx,gwx)
                 xgwx = X .* gwx
                 v1 = vec(mapslices(mean, xgwx, dims = 2))
+                println("v1 = $v1")
                 gdwx = alpha * (1 .- tanh.(alpha * wx).^2)
                 v2 = mean(gdwx) * wp
+                println("v2 = $v2")
                 w1 = v1 - v2
+                println("w1 BEFORE NORMALIZE = $w1")
                 #to-do create aux func
                 if (i > 1) 
+                println("/////")
+
                     t = w1
                     t = zeros(size(w1))
                     for u = 1:(i-1)
-                        k = sum(w1 * retW[u,:,]')
+                        k = sum(w1 .* retW[u,:,])
                         t = t + k * retW[u,:,]
                     end
+                println("/////")
+                println("W1 when i > 1")
                     w1 = w1 - t
                 end
-                w1 = w1 / sqrt(sum(w1.^2))   
-                println("wp = $wp")
-                println("w1 = $w1")
-                println("W for iter $iter = $W")
+                println("/////")
+                println("/////")
+                normalize!(w1)
+                println("W1 AFTER NORMALIZE = $w1")
+                println("wp for iter $iter nic $i = $wp")
                 #check for convergence
                 #eg: https://github.com/JuliaStats/MultivariateStats.jl/blob/master/src/ica.jl#L97 ln 124 and 125
                 chg =  maximum(abs.(abs.(sum(w1 .* wp)) .- 1.0))
-                println("Change for iter $iter = $chg")              
+                println("Tolerance change for iter $iter = $chg")              
                 wp = w1
                 converge = ( chg < tol )
             end
             retW[i,:,] = wp
+            println("retW = $retW")
         end
         return retW
     end
@@ -104,20 +118,14 @@ module fastICA
         if(nic > comp)
           nic = comp
         end
-        X1 = X
-        if(whiten)
-            K = 0
-            X = (X .- mean(X,dims=1))'
-            V = X * X'/n
-            s = svd(V)
-            D = Diagonal(1 ./ sqrt.(s.S))
-            K = D * s.U'
-            X1 = K * X
-        end
         # initialize weights of size n with random values
         #src : https://en.wikipedia.org/wiki/FastICA 
-        W = rand(comp,comp)
-        a = fast_ica_def(maxiter,nic,X1,tol,W,alpha)
+        #W = randn(comp,comp)
+        
+        ## Force weights to compare to CRAN implementation
+        W = [1.02081 0.408655; -1.92523 -0.756068]
+        println("Random matrix = $W")
+        a = fast_ica_def(maxiter,nic,X,tol,W,alpha)
         return a
     end
     
