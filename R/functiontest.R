@@ -17,11 +17,20 @@ par(mfcol = c(1, 2))
 plot(1:1000, X[,1], type = "l",xlab = "X1", ylab = "")
 plot(1:1000, X[,2], type = "l", xlab = "X2", ylab = "")
 
-# ICA for extracting independent sources from mixed signals
-a <- fastICA(X, 2, alg.typ = "deflation", fun = "logcosh", alpha = 1,
-             method = "R", row.norm = FALSE, maxit = 200,
-             tol = 0.0001, verbose = TRUE)
+#initw <- matrix(c(1.02081, 0.408655, -1.92523 ,-0.756068), 2, 2 , TRUE)
+initw<- matrix(rnorm(2^2),2,2)
+#PCA Whitening to match Julia implementation
+S = cov(X)
+W = whiteningMatrix (S, method="PCA")
+X1 = tcrossprod(X, W) # whitened data
 
+
+# ICA for extracting independent sources from mixed signals
+a <- ica.R.def(t(X1), 2, fun = "logcosh", alpha = 1, maxit = 200,
+             tol = 0.0001, verbose = TRUE, initw)
+K = a%*%W
+S = K%*%t(X)
+S = t(S)
 par(mfcol = c(1, 2))
-plot(1:1000, a$S[,1], type = "l", xlab = "S'1", ylab = "")
-plot(1:1000, a$S[,2], type = "l", xlab = "S'2", ylab = "")
+plot(1:1000, S[,1], type = "l", xlab = "S'1", ylab = "")
+plot(1:1000, S[,2], type = "l", xlab = "S'2", ylab = "")

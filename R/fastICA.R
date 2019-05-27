@@ -106,11 +106,13 @@ ica.R.def <-
             }
             w <- w - t
         }
+      
         w <- w/sqrt(sum(w^2))
         lim <- rep(1000, maxit)
         it <- 1
         if (fun == "logcosh") {
             while (lim[it] > tol && it < maxit) {
+              message("Iteration ", it , " w = ", w)
                 wx <- t(w) %*% X
                 gwx <- tanh(alpha * wx)
                 gwx <- matrix(gwx, n.comp, p, byrow = TRUE)
