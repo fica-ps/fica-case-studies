@@ -94,7 +94,7 @@ module fastICA
     #optional :
     #alpha   -> must be between [1,2]
     #whiten  -> whiten the data
-    function fast_ica(maxiter::Int64, nic::Int64,X::Array{Float64,2},tol::Float64, alpha::Float64 = 1. , whiten ::Bool=false)::Array{Float64,2}
+    function fast_ica(maxiter::Int64, nic::Int64,X::Array{Float64,2},tol::Float64, alpha::Float64 = 1. )::Array{Float64,2}
         #validate arguments
         m,n = size(X)        
         m > 1 || error("There must be more than one samples, n > 1.")
@@ -107,13 +107,13 @@ module fastICA
         end
         # initialize weights of size n with random values
         #src : https://en.wikipedia.org/wiki/FastICA 
-        #W = randn(comp,comp)
+        W = randn(comp,comp)
         
         ## Force weights to compare to CRAN implementation
-        W = [1.02081 0.408655; -1.92523 -0.756068]
+        #W = [1.02081 0.408655; -1.92523 -0.756068]
         println("Random matrix = $W")
-        a = fast_ica_def(maxiter,nic,X,tol,W,alpha)
-        return a
+        return a = fast_ica_def(maxiter,nic,X,tol,W,alpha)
+        
     end
     
 
