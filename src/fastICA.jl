@@ -28,6 +28,13 @@ module fastICA
         return vecs * pca_w
     end 
 
+    #auxiliary function for logcosh contrast function
+    function contrast_func(alpha::Float64,wx)::Tuple{Array{Float64},Array{Float64}}
+       gd= tanh.(alpha * wx)
+       gdd= alpha * (1 .- tanh.(alpha * wx).^2)
+       return (gd,gdd)
+    end
+
     #Fast Ica deflation algorithm
     function fast_ica_def(maxiter::Int64, nic::Int64,X::Array{Float64,2},tol::Float64,W::Array{Float64,2},alpha::Float64)::Array{Float64 , 2}     
         #return W
@@ -53,16 +60,14 @@ module fastICA
                 iter+=1
                 println("wp = $wp")
                 wx = wp' * X
-                gwx = tanh.(alpha * wx)
-                gwx = vcat(gwx,gwx)
-                xgwx = X .* gwx
-                v1 = vec(mapslices(mean, xgwx, dims = 2))
-                gdwx = alpha * (1 .- tanh.(alpha * wx).^2)
-                v2 = mean(gdwx) * wp
+                gdx,gddx = contrast_func(alpha,wx)
+                gdx = vcat(gdx,gdx)
+                xgdx = X .* gdx
+                v1 = vec(mapslices(mean, xgdx, dims = 2))
+                v2 = mean(gddx) * wp
                 w1 = v1 - v2
                 #to-do create aux func
                 if (i > 1) 
-                    t = w1
                     t = zeros(size(w1))
                     for u = 1:(i-1)
                         k = sum(w1 .* retW[u,:,])
