@@ -61,7 +61,6 @@ module fastICA
                 println("wp = $wp")
                 wx = wp' * X
                 gdx,gddx = contrast_func(alpha,wx)
-                gdx = vcat(gdx,gdx)
                 xgdx = X .* gdx
                 v1 = vec(mapslices(mean, xgdx, dims = 2))
                 v2 = mean(gddx) * wp
@@ -77,7 +76,6 @@ module fastICA
                 end
                 normalize!(w1)
                 #check for convergence
-                #eg: https://github.com/JuliaStats/MultivariateStats.jl/blob/master/src/ica.jl#L97 ln 124 and 125
                 chg =  maximum(abs.(abs.(sum(w1 .* wp)) .- 1.0))
                 println("Tolerance change for iter $iter = $chg")              
                 wp = w1
@@ -114,18 +112,13 @@ module fastICA
         #src : https://en.wikipedia.org/wiki/FastICA 
         W = randn(comp,comp)
         
-        ## Force weights to compare to CRAN implementation
-        #W = [1.02081 0.408655; -1.92523 -0.756068]
         println("Random matrix = $W")
-        return a = fast_ica_def(maxiter,nic,X,tol,W,alpha)
+        return fast_ica_def(maxiter,nic,X,tol,W,alpha)
         
     end
     
 
 #=
-        a = fast_ica_def(maxiter,nic,X1,tol)
-        w = a * K
-        return w * X
     ### PARALLEL FAST_ICA IMPLEMENTATION USING LOGCOSH
     
     function fast_ica(maxiter::Int64, nic::Int64,X::Array{Float64,2},tol::Float64, alpha::Int64 = 1)::Array{Float64 , 2}
@@ -181,7 +174,6 @@ module fastICA
             W = sW1.U * Diagonal( 1 ./ sW.S ) * sW1.U' * W    
             println("W for iter $t = $W")
             #check for convergence
-            #eg: https://github.com/JuliaStats/MultivariateStats.jl/blob/master/src/ica.jl#L97 ln 124 and 125
             chg =  maximum(abs.(abs.(diag(W*oldW')) .- 1.0))
             println("Change for iter $t = $chg")
             converge = ( chg < tol )
@@ -190,50 +182,5 @@ module fastICA
         return W
     end
     
-    ######
-    function fast_ica(maxiter::Int64, nic::Int64,X::Array{Float64,2},tol::Float64)::Array{Float64 , 2}
-        #validate arguments
-        n,m = size(X)
-        n > 1 || error("There must be more than one samples, n > 1.")
-        maxiter > 1 || error("maxiter must be greater than 1.")
-        tol > 0 || error("tol must be positive.")
-        chg = 0
-        # initialize weights of size n with random values
-        #src : https://en.wikipedia.org/wiki/FastICA 
-        W = rand(n,nic)
-        #old W
-        oldW = Array{Float64}(undef,n,nic)
-        for p = 1:nic
-            #normalize weight vector to unity i.e. vector sum = 1
-            #src : http://www.measurement.sk/2011/Patil.pdf pg 119
-            wp = view(W, :, p)
-            wp = normalize!(wp,1)
-            iter = 0
-            converge = false
-            while  iter < maxiter
-                iter+=1
-                #store previous iteration W
-                copyto!(oldW,W)
-                t = X'*wp;
-                g = t.^3; 
-                dg = 3*t.^2; 
-                wp = X*g/m-mean(dg)*wp;
-                
-                #symmetric decorrelation
-                #src : https://www.cs.helsinki.fi/u/ahyvarin/papers/NN00new.pdf pg 15
-                #eg : https://github.com/JuliaStats/MultivariateStats.jl/blob/master/src/ica.jl ln 120
-                copyto!(W, W * (W'W).^(-1/2))     
-                #check for convergence
-                #eg: https://github.com/JuliaStats/MultivariateStats.jl/blob/master/src/ica.jl#L97 ln 124 and 125
-                chg = 1 - maximum(abs.(abs.(dot.(W,oldW)) .- 1.0))
-                
-                if( chg <= tol )
-                    return W
-                end
-            end
-        end
-        throw("Convergence was not possible with tol = $tol, maxiter= $maxiter \n last iteration change = $chg")
-    end
-
- =#
+   =#
 end
