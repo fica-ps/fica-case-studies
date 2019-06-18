@@ -15,12 +15,14 @@ module fastICA
     #mat -> the matrix to whiten 
     #pca -> optional boolean which is used to determine the whitening technique
     function whiten(mat::Array{Float64 ,2},pca::Bool = true)::Array{Float64 ,2}
-        sigma = cov(mat)
+        sigma = cov(mat)        
         vals,vecs = eigen(sigma)
         #Sort eigvals and eigvecs by DESCENDING order
         vecs = reverse(vecs, dims=2)
         vals = reverse(vals, dims=1)
         pca_w =  Diagonal(1 ./ sqrt.(vals)) * vecs'
+        #U,S,_ = svd(sigma)
+        #pca_w =  Diagonal(1 ./ sqrt.(S)) * U'
         if(pca)
             return pca_w
         end
@@ -76,7 +78,7 @@ module fastICA
                 end
                 normalize!(w1)
                 #check for convergence
-                chg =  maximum(abs.(abs.(sum(w1 .* wp)) .- 1.0))
+                chg =  abs.(abs.(sum(w1 .* wp)) .- 1.0)
                 println("Tolerance change for iter $iter = $chg")              
                 wp = w1
                 converge = ( chg < tol )
