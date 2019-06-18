@@ -26,19 +26,32 @@ cols = ncol(c_one.g)
 vec_one <- as.vector(array(c_one.g))
 vec_two <- as.vector(array(c_two.g))
 
-X = vec_one * 0.2 + vec_two * 0.8
+X = vec_one * 0.6 + vec_two * 0.4
 
 plot(as.cimg(matrix(X,rows,cols)))
 
-Z = vec_one * 0.8 + vec_two * 0.2
+Z = vec_one * 0.4 + vec_two * 0.6
 
 plot(as.cimg(matrix(Z,rows,cols)))
 
-K <- cbind(X,Z)
+X <- cbind(X,Z)
 
-a <- fastICA(K, 2, alg.typ = "deflation", fun = "logcosh", alpha = 1,
-             method = "R", row.norm = FALSE, maxit = 100,
-             tol = 0.0001, verbose = TRUE)
+initw <- matrix(c(0.86456941, 1.0646533 , 0.07053282 ,0.8470662), 2, 2 , TRUE)
+#initw<- matrix(rnorm(2^2),2,2)
+#PCA Whitening to match Julia implementation
+S = cov(X)
+W = whiteningMatrix (S, method="PCA")
+X1 = tcrossprod(X, W) # whitened data
 
-plot(as.cimg(matrix(a$S[,1],rows,cols)), main = "Cat one")
-plot(as.cimg(matrix(a$S[,2],rows,cols)), main = "Cat two")
+a <- ica.R.def(t(X1), 2, fun = "logcosh", alpha = 1, maxit = 200,
+               tol = 0.0001, verbose = TRUE, initw)
+K = a%*%W
+S = X%*%t(K)
+S = t(S)
+
+
+#a <- fastICA(K, 2, alg.typ = "deflation", fun = "logcosh", alpha = 1,
+             #method = "R", row.norm = FALSE, maxit = 100,
+             #tol = 0.0001, verbose = TRUE)
+plot(as.cimg(matrix(S[1,]+S[2,],rows,cols)), main = "Cat one")
+plot(as.cimg(matrix(S[1,]-S[2,],rows,cols)), main = "Cat two")

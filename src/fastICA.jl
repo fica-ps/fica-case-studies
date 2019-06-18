@@ -57,10 +57,8 @@ module fastICA
             iter = 0
             chg = 0
             converge = false
-            println("Component n $nic")
             while !converge && iter < maxiter
                 iter+=1
-                println("wp = $wp")
                 wx = wp' * X
                 gdx,gddx = contrast_func(alpha,wx)
                 xgdx = X .* gdx
