@@ -43,7 +43,8 @@ module fastICA
         retW = zeros(size(W))        
         #src : http://www.measurement.sk/2011/Patil.pdf pg 119 
         for i = 1:nic
-            wp = W[i,:,]            
+            println("Component n $i")
+            wp = W[i,:,]
             #to-do create aux func
             if (i > 1)
                 t = zeros(size(wp))
@@ -82,8 +83,8 @@ module fastICA
                 converge = ( chg < tol )
             end
             retW[i,:,] = wp
-            println("retW = $retW")
         end
+        println("retW = $retW")
         return retW
     end
 
