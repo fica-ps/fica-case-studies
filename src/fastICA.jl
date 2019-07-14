@@ -61,7 +61,7 @@ module fastICA
             while !converge && iter < maxiter
                 iter+=1
                 wx = wp' * X
-                gdx,gddx = contrast_func(alpha,wx)
+                gdx,gddx = contrast_func(alpha,wx)            
                 xgdx = X .* gdx
                 v1 = vec(mapslices(mean, xgdx, dims = 2))
                 v2 = mean(gddx) * wp
@@ -118,70 +118,4 @@ module fastICA
         
     end
     
-
-#=
-    ### PARALLEL FAST_ICA IMPLEMENTATION USING LOGCOSH
-    
-    function fast_ica(maxiter::Int64, nic::Int64,X::Array{Float64,2},tol::Float64, alpha::Int64 = 1)::Array{Float64 , 2}
-        #validate arguments
-        p,n = size(X)
-        n > 1 || error("There must be more than one samples, n > 1.")
-        maxiter > 1 || error("maxiter must be greater than 1.")
-        tol > 0 || error("tol must be positive.")
-        alpha >= 1 && alpha <= 2|| error("alpha must be in between 1 and 2")
-        
-        if(p > n)
-            X = X'
-        end
-        if(nic > min(n,p))
-            nic = min(n,p)
-        end
-        
-        # initialize weights of size n with random values
-        #src : https://en.wikipedia.org/wiki/FastICA 
-        W = rand(nic,nic)
-        #old W
-        oldW = zeros(nic,nic)        
-        #normalize weight vector to unity i.e. vector sum = 1
-        #src : http://www.measurement.sk/2011/Patil.pdf pg 119 
-        for i = 1:nic
-            wp = view(W, i,:,)
-            wp = normalize!(wp,1)
-        end
-        
-        sW = svd(W)
-        W = sW.U * Diagonal(1 ./ sW.S) * sW.U' * W
-        #main loop
-        # src: 
-        #http://www.measurement.sk/2011/Patil.pdf pg 119 Fixed Point algorithm for ICA
-        #https://www.cs.helsinki.fi/u/ahyvarin/papers/NN00new.pdf pg 15
-        t = 0
-        chg = 0
-        converge = false
-        while !converge && t < maxiter
-             t+=1
-            #store previous iteration W
-            copyto!(oldW,W)
-            
-            #based on CRAN implementation ( parallel using logcosh aprox. to neg-entropy function )
-            #src : https://cran.r-project.org/web/packages/fastICA/fastICA.pdf
-            wx = W * X
-            gwx = tanh.(alpha * wx)
-            v1 = gwx * X'/p
-            gdwx = alpha * (1 .- gwx.^2)
-            v2 = Diagonal(vec(mapslices(mean, gdwx, dims = 2))) * W
-            W = v1 - v2
-            sW1 = svd(W)
-            W = sW1.U * Diagonal( 1 ./ sW.S ) * sW1.U' * W    
-            println("W for iter $t = $W")
-            #check for convergence
-            chg =  maximum(abs.(abs.(diag(W*oldW')) .- 1.0))
-            println("Change for iter $t = $chg")
-            converge = ( chg < tol )
-        end
-        converge || throw("Convergence was not possible with tol = $tol, maxiter= $maxiter, last change = $chg")
-        return W
-    end
-    
-   =#
 end
