@@ -15,7 +15,7 @@ module fastICA
     #mat -> the matrix to whiten 
     #pca -> optional boolean which is used to determine the whitening technique
     function whiten(mat::Array{Float64 ,2},pca::Bool = true)::Array{Float64 ,2}
-        sigma = cov(mat)        
+        sigma = cov(mat)
         vals,vecs = eigen(sigma)
         #Sort eigvals and eigvecs by DESCENDING order
         vecs = reverse(vecs, dims=2)
@@ -55,16 +55,19 @@ module fastICA
                 wp = wp - t
             end
             normalize!(wp)
+
             iter = 0
             chg = 0
             converge = false
             while !converge && iter < maxiter
                 iter+=1
-                wx = wp' * X
-                gdx,gddx = contrast_func(alpha,wx)            
+                println("iter = $iter")
+                wx = wp' * X      
+                gdx,gddx = contrast_func(alpha,wx)
                 xgdx = X .* gdx
-                v1 = vec(mapslices(mean, xgdx, dims = 2))
-                v2 = mean(gddx) * wp
+                v1 = vec(mapslices(mean, xgdx, dims = 2)) 
+                println(v1)
+                v2 = mean(gddx) * wp              
                 w1 = v1 - v2
                 #to-do create aux func
                 if (i > 1) 
